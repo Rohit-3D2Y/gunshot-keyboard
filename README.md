@@ -130,7 +130,7 @@ repository secrets and the workflow signs automatically:
 ## Contributing
 
 Bug reports, sound ideas and pull requests are welcome. See
-[CONTRIBUTING.md](CONTRIBUTING.md). For security issues see
+[CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). For security issues see
 [SECURITY.md](SECURITY.md).
 
 ## License
