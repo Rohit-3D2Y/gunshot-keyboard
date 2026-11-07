@@ -1,0 +1,165 @@
+[
+ {
+  "name": "Gunshot",
+  "slug": "gunshot",
+  "sequential": false,
+  "clips": [
+   "sounds/gunshot/0.wav",
+   "sounds/gunshot/1.wav",
+   "sounds/gunshot/2.wav",
+   "sounds/gunshot/3.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Cat",
+  "slug": "cat",
+  "sequential": false,
+  "clips": [
+   "sounds/cat/0.wav",
+   "sounds/cat/1.wav",
+   "sounds/cat/2.wav",
+   "sounds/cat/3.wav",
+   "sounds/cat/4.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Duck",
+  "slug": "duck",
+  "sequential": false,
+  "clips": [
+   "sounds/duck/0.wav",
+   "sounds/duck/1.wav",
+   "sounds/duck/2.wav",
+   "sounds/duck/3.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Fart",
+  "slug": "fart",
+  "sequential": false,
+  "clips": [
+   "sounds/fart/0.wav",
+   "sounds/fart/1.wav",
+   "sounds/fart/2.wav",
+   "sounds/fart/3.wav",
+   "sounds/fart/4.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "IBM Model M",
+  "slug": "ibm-model-m",
+  "sequential": false,
+  "clips": [
+   "sounds/ibm-model-m/0.wav",
+   "sounds/ibm-model-m/1.wav",
+   "sounds/ibm-model-m/2.wav",
+   "sounds/ibm-model-m/3.wav",
+   "sounds/ibm-model-m/4.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Laser",
+  "slug": "laser",
+  "sequential": false,
+  "clips": [
+   "sounds/laser/0.wav",
+   "sounds/laser/1.wav",
+   "sounds/laser/2.wav",
+   "sounds/laser/3.wav",
+   "sounds/laser/4.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Mechanical Keyboard",
+  "slug": "mechanical-keyboard",
+  "sequential": false,
+  "clips": [
+   "sounds/mechanical-keyboard/0.wav",
+   "sounds/mechanical-keyboard/1.wav",
+   "sounds/mechanical-keyboard/2.wav",
+   "sounds/mechanical-keyboard/3.wav",
+   "sounds/mechanical-keyboard/4.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Moan",
+  "slug": "moan",
+  "sequential": false,
+  "clips": [
+   "sounds/moan/0.wav",
+   "sounds/moan/1.wav",
+   "sounds/moan/2.wav",
+   "sounds/moan/3.wav",
+   "sounds/moan/4.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Punch",
+  "slug": "punch",
+  "sequential": false,
+  "clips": [
+   "sounds/punch/0.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Thocky Keyboard",
+  "slug": "thocky-keyboard",
+  "sequential": false,
+  "clips": [
+   "sounds/thocky-keyboard/0.wav",
+   "sounds/thocky-keyboard/1.wav",
+   "sounds/thocky-keyboard/2.wav",
+   "sounds/thocky-keyboard/3.wav",
+   "sounds/thocky-keyboard/4.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Typewriter",
+  "slug": "typewriter",
+  "sequential": false,
+  "clips": [
+   "sounds/typewriter/0.wav",
+   "sounds/typewriter/1.wav",
+   "sounds/typewriter/2.wav",
+   "sounds/typewriter/3.wav",
+   "sounds/typewriter/4.wav"
+  ],
+  "special": {
+   "enter": "sounds/typewriter/enter.wav"
+  }
+ },
+ {
+  "name": "Yamete Kudasai",
+  "slug": "yamete-kudasai",
+  "sequential": true,
+  "clips": [
+   "sounds/yamete-kudasai/0.wav",
+   "sounds/yamete-kudasai/1.wav",
+   "sounds/yamete-kudasai/2.wav",
+   "sounds/yamete-kudasai/3.wav",
+   "sounds/yamete-kudasai/4.wav",
+   "sounds/yamete-kudasai/5.wav",
+   "sounds/yamete-kudasai/6.wav"
+  ],
+  "special": {}
+ },
+ {
+  "name": "Zombie",
+  "slug": "zombie",
+  "sequential": false,
+  "clips": [
+   "sounds/zombie/0.wav"
+  ],
+  "special": {}
+ }
+]

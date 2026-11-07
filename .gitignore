@@ -11,3 +11,7 @@ pip_bg.log
 # Local developer tooling (machine-specific)
 .claude/
 CLAUDE.md
+.vercel/
+
+.vercel
+.env*

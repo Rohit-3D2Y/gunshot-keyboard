@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gunshot: every keypress plays a sound</title>
+  <meta name="description" content="Turn your keyboard into a gun, a typewriter, a clicky mechanical keyboard, a cat... Free, open-source keyboard sound app for Windows and macOS. No tracking, no internet.">
+  <meta property="og:title" content="Gunshot: every keypress plays a sound">
+  <meta property="og:description" content="13 sound packs, from gunshots to Cherry MX Blues. Free & open source for Windows and macOS.">
+  <meta property="og:image" content="/icon.png">
+  <meta name="theme-color" content="#0d0d10">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="#top"><img src="/icon.png" alt="" width="28" height="28"> Gunshot</a>
+    <nav>
+      <a href="#try">Try it</a>
+      <a href="#sounds">Sounds</a>
+      <a href="#install">Install</a>
+      <a href="#releases">Releases</a>
+      <a class="gh" href="https://github.com/Rohit-3D2Y/gunshot-keyboard" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <img class="hero-icon" src="/icon.png" alt="Gunshot crosshair logo" width="96" height="96">
+      <h1>Every keypress<br><span class="accent">fires a gunshot.</span></h1>
+      <p class="lead">Or a typewriter. Or Cherry MX Blues. Or a cat. Gunshot plays a sound
+        every time you press a key, in any app. Pick from 13 sound packs and toggle it with
+        <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd>.</p>
+
+      <div class="download">
+        <a id="dl-primary" class="btn btn-primary" href="https://github.com/Rohit-3D2Y/gunshot-keyboard/releases/latest">
+          <span id="dl-label">Download</span>
+          <small id="dl-meta">Free · Windows &amp; macOS</small>
+        </a>
+        <div id="dl-others" class="dl-others"></div>
+      </div>
+      <p class="fineprint" id="version-line">Free and open source (MIT) · No tracking · No internet connection</p>
+    </section>
+
+    <section id="try" class="panel">
+      <h2>Try it right here</h2>
+      <p class="sub">Pick a sound, click the box and start typing. Fast typing overlaps instead of cutting off, just like the app.</p>
+      <div id="pack-chips" class="chips" role="radiogroup" aria-label="Sound pack"></div>
+      <textarea id="try-box" rows="4" placeholder="Click here and type… (Enter rings the typewriter bell)" spellcheck="false"></textarea>
+      <div class="try-foot">
+        <label>Volume <input id="volume" type="range" min="0" max="1" step="0.05" value="0.6"></label>
+        <span id="key-count">0 shots fired</span>
+      </div>
+    </section>
+
+    <section id="sounds">
+      <h2>13 sound packs</h2>
+      <p class="sub">Real recordings, openly licensed. Click to preview.</p>
+      <div id="pack-grid" class="grid"></div>
+    </section>
+
+    <section class="features">
+      <div class="feature">
+        <h3>🔒 Keys are never recorded</h3>
+        <p>Gunshot reacts to <em>that</em> a key was pressed, never <em>which</em> one. Nothing is logged, stored or sent.</p>
+      </div>
+      <div class="feature">
+        <h3>📴 No internet</h3>
+        <p>No accounts, no analytics, no auto-updates phoning home. It works fully offline.</p>
+      </div>
+      <div class="feature">
+        <h3>⚡ Built for fast typists</h3>
+        <p>A real-time mixer keeps up at 100+ WPM: sounds overlap naturally and never cut off.</p>
+      </div>
+      <div class="feature">
+        <h3>🧩 Open source</h3>
+        <p>MIT licensed. Read every line, build it yourself, or <a href="https://github.com/Rohit-3D2Y/gunshot-keyboard/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">add your own sound pack</a>.</p>
+      </div>
+    </section>
+
+    <section id="install" class="panel">
+      <h2>Install</h2>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="win" role="tab">Windows</button>
+        <button class="tab" data-tab="mac" role="tab">macOS</button>
+      </div>
+      <ol class="steps" data-panel="win">
+        <li>Download <code>GunshotSetup.exe</code> and run it. No admin rights needed.</li>
+        <li>If Windows shows <strong>“Windows protected your PC”</strong>, click <strong>More info → Run anyway</strong>.
+          This appears for new apps without a paid code-signing certificate. Every release is built
+          publicly by GitHub Actions from the source code, and you can verify the file against
+          <code>SHA256SUMS.txt</code>.</li>
+        <li>A red crosshair appears in the system tray (click <strong>^</strong> by the clock). Right-click it to pick a sound and volume.</li>
+        <li>Uninstall anytime from <strong>Settings → Apps</strong>.</li>
+      </ol>
+      <ol class="steps hidden" data-panel="mac">
+        <li>Download the <code>.dmg</code> for your Mac: <strong>Apple Silicon</strong> (M1 and newer) or <strong>Intel</strong>.</li>
+        <li>Open it and drag <strong>Gunshot</strong> into <strong>Applications</strong>.</li>
+        <li>First launch: right-click Gunshot → <strong>Open</strong>, or allow it under
+          <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>.</li>
+        <li>Allow <strong>Input Monitoring</strong> for Gunshot when asked, then quit and reopen it. macOS requires this for any app that reacts to typing.</li>
+        <li>The crosshair lives in the menu bar. Toggle with <kbd>Ctrl</kbd>+<kbd>Option</kbd>+<kbd>G</kbd>.</li>
+      </ol>
+    </section>
+
+    <section id="releases">
+      <h2>Releases</h2>
+      <p class="sub">Pulled live from GitHub. Every new version shows up here automatically.</p>
+      <div id="release-list" class="releases"><p class="muted">Loading releases…</p></div>
+    </section>
+
+    <section class="faq">
+      <h2>FAQ</h2>
+      <details><summary>Is it safe? Isn't listening to my keyboard what keyloggers do?</summary>
+        <p>The app needs to know <em>when</em> you press a key, which is the same permission every keyboard-sound app needs.
+        The difference is what happens next: Gunshot plays a sound and forgets the key. It never writes keys anywhere and has no network
+        code at all. The entire source is public, so anyone can check, and releases are built by GitHub from that exact source.</p></details>
+      <details><summary>Why does my antivirus or SmartScreen warn about it?</summary>
+        <p>New, unsigned apps that listen to the keyboard can trigger warnings. You can verify your download with the
+        <code>SHA256SUMS.txt</code> attached to each release, or build it yourself from source.</p></details>
+      <details><summary>Can I add my own sounds?</summary>
+        <p>Yes. Drop a folder of <code>.wav</code> files into <code>gunshot/packs/</code> and it appears in the menu. See the
+        <a href="https://github.com/Rohit-3D2Y/gunshot-keyboard/blob/main/gunshot/packs/README.md" target="_blank" rel="noopener">sound pack guide</a>,
+        or <a href="https://github.com/Rohit-3D2Y/gunshot-keyboard/issues/new?template=sound_request.yml" target="_blank" rel="noopener">request a sound</a>.</p></details>
+      <details><summary>How do I turn it off quickly?</summary>
+        <p>Press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd> (Mac: <kbd>Ctrl</kbd>+<kbd>Option</kbd>+<kbd>G</kbd>). The crosshair turns grey.</p></details>
+    </section>
+  </main>
+
+  <footer>
+    <p>Gunshot is free software under the <a href="https://github.com/Rohit-3D2Y/gunshot-keyboard/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
+      · Made by <a href="https://github.com/Rohit-3D2Y" target="_blank" rel="noopener">Rohit Tiwari</a>
+      · <a href="https://github.com/Rohit-3D2Y/gunshot-keyboard/blob/main/gunshot/packs/CREDITS.md" target="_blank" rel="noopener">Sound credits</a>
+      · <a href="https://github.com/Rohit-3D2Y/gunshot-keyboard/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a></p>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

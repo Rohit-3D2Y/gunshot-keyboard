@@ -9,7 +9,9 @@ in the system tray / menu bar. Free, open source, no tracking, no internet.
 
 ## Install
 
-Download the latest version from the **[Releases page](../../releases/latest)**:
+**Website & live demo: [gunshot-keyboard.vercel.app](https://gunshot-keyboard.vercel.app)**, where you can try every sound in your browser.
+
+Download the latest version from the website or the **[Releases page](../../releases/latest)**:
 
 | System | File | How |
 | --- | --- | --- |
@@ -97,13 +99,18 @@ On Windows you can also double-click `Gunshot.vbs` to run from source with no co
 | `gunshot/system.py` | Start-at-login, single instance, macOS permission |
 | `packaging/`, `installer/` | PyInstaller spec, DMG script, Inno Setup installer |
 | `.github/workflows/release.yml` | CI builds + releases for both platforms |
+| `site/` | Landing page (static, deployed to Vercel). Releases load live from GitHub |
 
 ## Releasing
 
 1. Bump `__version__` in `gunshot/__init__.py`.
 2. `git tag v1.2.0 && git push --tags`
 3. GitHub Actions builds the Windows installer and both Mac disk images, then
-   publishes them with checksums as a GitHub Release.
+   publishes them with checksums as a GitHub Release. The website picks up the
+   new release automatically.
+
+The website (`site/`) redeploys on Vercel whenever `main` changes. After
+changing sound packs, refresh its previews with `python tools/export_site_sounds.py`.
 
 ### Code signing (so Windows/macOS don't warn users)
 
