@@ -108,6 +108,11 @@ class Mixer:
     def set_pack(self, pack: sounds.Pack) -> None:
         self._picker = ClipPicker(pack)  # sounds already playing finish naturally
 
+    def discard(self) -> None:
+        """Forget pending and playing sounds (used while no device is open)."""
+        self._pending.clear()
+        self._voices = []
+
     def render(self, frames: int) -> np.ndarray:
         picker = self._picker
         while self._pending:
@@ -163,16 +168,16 @@ class WaveOutPlayer(Player):
     _CALLBACK_EVENT = 0x00050000
     _WHDR_DONE = 0x1
 
+    # With no usable output device (none plugged in, Bluetooth disconnected)
+    # the app keeps running silently and tries again this often.
+    RETRY_SECONDS = 2.0
+
     def __init__(self, pack: sounds.Pack, volume: float) -> None:
         self.mixer = Mixer(pack, volume)
+        self.device_open = False
         self._stop = threading.Event()
-        self._ready = threading.Event()
-        self._error: Exception | None = None
         self._thread = threading.Thread(target=self._run, name="gunshot-audio", daemon=True)
         self._thread.start()
-        self._ready.wait(timeout=5)
-        if self._error:
-            raise self._error
 
     def fire(self, key: str | None = None) -> None:
         self.mixer.fire(key)
@@ -190,8 +195,6 @@ class WaveOutPlayer(Player):
     def _run(self) -> None:
         winmm = ctypes.windll.winmm
         kernel32 = ctypes.windll.kernel32
-        handle = ctypes.c_void_p()
-        hdr_size = ctypes.sizeof(_WAVEHDR)
         winmm.waveOutOpen.argtypes = [
             ctypes.POINTER(ctypes.c_void_p), ctypes.c_uint, ctypes.POINTER(_WAVEFORMATEX),
             ctypes.c_size_t, ctypes.c_size_t, ctypes.c_uint32,
@@ -204,21 +207,37 @@ class WaveOutPlayer(Player):
         kernel32.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
         kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
 
-        fmt = _WAVEFORMATEX(1, 1, sounds.SAMPLE_RATE, sounds.SAMPLE_RATE * 2, 2, 16, 0)
-        event = kernel32.CreateEventW(None, False, False, None)
-        result = winmm.waveOutOpen(
-            ctypes.byref(handle), self._WAVE_MAPPER, ctypes.byref(fmt), event, 0,
-            self._CALLBACK_EVENT,
-        )
-        if result != 0:
-            self._error = OSError(f"could not open the audio device (waveOutOpen error {result})")
-            self._ready.set()
-            return
         # Audio must never wait behind the rest of the app: high thread priority,
         # and 1 ms timer resolution (Windows' default ~15.6 ms wakes us too late).
         kernel32.SetThreadPriority(kernel32.GetCurrentThread(), 2)  # THREAD_PRIORITY_HIGHEST
         winmm.timeBeginPeriod(1)
+        event = kernel32.CreateEventW(None, False, False, None)
+        try:
+            while not self._stop.is_set():
+                handle = ctypes.c_void_p()
+                fmt = _WAVEFORMATEX(1, 1, sounds.SAMPLE_RATE, sounds.SAMPLE_RATE * 2, 2, 16, 0)
+                result = winmm.waveOutOpen(
+                    ctypes.byref(handle), self._WAVE_MAPPER, ctypes.byref(fmt), event, 0,
+                    self._CALLBACK_EVENT,
+                )
+                if result != 0:
+                    # No device right now: drop keypresses instead of replaying
+                    # a backlog later, and look again shortly.
+                    self.mixer.discard()
+                    self._stop.wait(self.RETRY_SECONDS)
+                    continue
+                self.device_open = True
+                try:
+                    self._stream(winmm, kernel32, handle, event)
+                finally:
+                    self.device_open = False
+        finally:
+            kernel32.CloseHandle(event)
+            winmm.timeEndPeriod(1)
 
+    def _stream(self, winmm, kernel32, handle, event) -> None:
+        """Feed the open device until we're stopped or the device goes away."""
+        hdr_size = ctypes.sizeof(_WAVEHDR)
         buffers = [(ctypes.c_int16 * self.BUFFER_FRAMES)() for _ in range(self.BUFFERS)]
         headers = []
         for buf in buffers:
@@ -228,7 +247,6 @@ class WaveOutPlayer(Player):
             winmm.waveOutPrepareHeader(handle, ctypes.byref(hdr), hdr_size)
             winmm.waveOutWrite(handle, ctypes.byref(hdr), hdr_size)  # start with silence
             headers.append(hdr)
-        self._ready.set()
 
         nxt = 0
         try:
@@ -243,15 +261,14 @@ class WaveOutPlayer(Player):
                     pcm = np.frombuffer(buffers[nxt], dtype=np.int16)
                     pcm[:] = (samples * 32767).astype(np.int16)
                     headers[nxt].dwFlags &= ~self._WHDR_DONE
-                    winmm.waveOutWrite(handle, ctypes.byref(headers[nxt]), hdr_size)
+                    if winmm.waveOutWrite(handle, ctypes.byref(headers[nxt]), hdr_size) != 0:
+                        return  # device was unplugged/disabled: reopen
                     nxt = (nxt + 1) % self.BUFFERS
         finally:
             winmm.waveOutReset(handle)
             for hdr in headers:
                 winmm.waveOutUnprepareHeader(handle, ctypes.byref(hdr), hdr_size)
             winmm.waveOutClose(handle)
-            kernel32.CloseHandle(event)
-            winmm.timeEndPeriod(1)
 
 
 # --- macOS ---------------------------------------------------------------------

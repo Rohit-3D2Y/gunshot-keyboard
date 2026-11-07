@@ -78,3 +78,53 @@ def test_pack_switch_keeps_playing_sounds():
     mixer.set_pack(sounds.Pack([b]))
     mixer.fire()
     assert np.isclose(mixer.render(100).mean(), 0.6)
+
+
+def test_discard_drops_backlog():
+    mixer = Mixer(sounds.Pack([np.full(1000, 0.5, np.float32)]), volume=1.0)
+    mixer.fire()
+    mixer.render(10)
+    mixer.fire()
+    mixer.discard()
+    assert not mixer.render(100).any()
+
+
+def test_no_audio_device_keeps_app_alive(monkeypatch):
+    """With no output device the player must not raise; it keeps retrying."""
+    import sys
+    import time
+
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    from gunshot.audio import WaveOutPlayer
+
+    real = ctypes.windll.winmm
+    attempts = []
+
+    class NoDevice:
+        """winmm with every output device missing."""
+
+        def __getattr__(self, name):
+            return getattr(real, name)
+
+    class FailingOpen:
+        argtypes = None
+
+        def __call__(self, *args):
+            attempts.append(1)
+            return 2  # MMSYSERR_BADDEVICEID
+
+    fake = NoDevice()
+    fake.waveOutOpen = FailingOpen()
+    monkeypatch.setattr(ctypes.windll, "winmm", fake)
+    monkeypatch.setattr(WaveOutPlayer, "RETRY_SECONDS", 0.05)
+    player = WaveOutPlayer(sounds.Pack(_clips(2)), 0.5)
+    player.fire()
+    time.sleep(0.3)
+    assert player._thread.is_alive()  # still running, not crashed
+    assert player.device_open is False
+    assert len(attempts) >= 3  # and it keeps looking for a device
+    player.close()
+    assert not player._thread.is_alive()

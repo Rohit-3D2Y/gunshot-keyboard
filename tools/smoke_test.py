@@ -20,7 +20,10 @@ from gunshot.app import make_listener  # noqa: E402
 from gunshot.audio import create_player  # noqa: E402
 
 player = create_player(sounds.load_pack(sounds.DEFAULT_PACK), 0.2)
-print(f"audio backend: {type(player).__name__}")
+time.sleep(0.5)
+device = getattr(player, "device_open", "n/a")
+# CI machines may have no sound card: the app must keep running silently.
+print(f"audio backend: {type(player).__name__} (output device open: {device})")
 for name in sounds.available_packs():
     player.set_pack(sounds.load_pack(name))
     for key in (None, None, "enter"):
