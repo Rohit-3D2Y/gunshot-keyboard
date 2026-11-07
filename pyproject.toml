@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gunshot"
+dynamic = ["version"]
+description = "Make every keypress sound like a gunshot."
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.24", "pillow>=10", "pynput>=1.7.7", "pystray>=0.19.5"]
+
+[project.optional-dependencies]
+dev = ["pytest", "pyinstaller"]
+
+[project.gui-scripts]
+gunshot = "gunshot.app:main"
+
+[tool.setuptools]
+packages = ["gunshot"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+gunshot = ["packs/**/*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "gunshot.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

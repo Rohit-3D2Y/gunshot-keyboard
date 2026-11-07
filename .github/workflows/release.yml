@@ -1,0 +1,148 @@
+# Builds the Windows installer and macOS disk images.
+#   * Every push / PR: test + build, artifacts downloadable from the run page.
+#   * Pushing a tag like v1.2.0: also publishes a GitHub Release with
+#     SHA256SUMS.txt so anyone can download and verify the files.
+#
+# Code signing switches on automatically once these repo secrets exist
+# (Settings > Secrets and variables > Actions). Without them builds still
+# work, they're just unsigned.
+#   Windows:  WINDOWS_CERT_PFX (base64 of the .pfx), WINDOWS_CERT_PASSWORD
+#   macOS:    MACOS_CERT_P12 (base64 "Developer ID Application" .p12),
+#             MACOS_CERT_PASSWORD, MACOS_SIGN_IDENTITY
+#             (e.g. "Developer ID Application: Your Name (TEAMID)"),
+#             APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD (app-specific password)
+
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
+      WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pyinstaller pytest
+      - name: Test
+        run: python -m pytest -q
+      - name: Build Gunshot.exe
+        run: |
+          python tools/prepare_build.py
+          python -m PyInstaller --noconfirm --clean packaging/gunshot.spec
+      - name: Sign Gunshot.exe
+        if: env.WINDOWS_CERT_PFX != ''
+        shell: pwsh
+        run: |
+          [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\cert.pfx", [Convert]::FromBase64String($env:WINDOWS_CERT_PFX))
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -Last 1
+          & $signtool sign /f "$env:RUNNER_TEMP\cert.pfx" /p "$env:WINDOWS_CERT_PASSWORD" /fd sha256 /tr http://timestamp.digicert.com /td sha256 dist\Gunshot.exe
+          "SIGNTOOL=$($signtool.FullName)" | Out-File -Append $env:GITHUB_ENV
+      - name: Build installer
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          $version = python -c "import gunshot; print(gunshot.__version__)"
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$version" installer\gunshot.iss
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Sign installer
+        if: env.WINDOWS_CERT_PFX != ''
+        shell: pwsh
+        run: |
+          & $env:SIGNTOOL sign /f "$env:RUNNER_TEMP\cert.pfx" /p "$env:WINDOWS_CERT_PASSWORD" /fd sha256 /tr http://timestamp.digicert.com /td sha256 (Get-Item dist\GunshotSetup-*.exe)
+          Remove-Item "$env:RUNNER_TEMP\cert.pfx"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/GunshotSetup-*.exe
+
+  macos:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-latest # Apple Silicon (M1 and newer)
+            arch: arm64
+          - runner: macos-15-intel # Intel Macs
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    env:
+      MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+      MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+      MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pyinstaller pytest
+      - name: Test
+        run: python -m pytest -q
+      - name: Build Gunshot.app
+        run: |
+          python tools/prepare_build.py
+          python -m PyInstaller --noconfirm --clean packaging/gunshot.spec
+      - name: Sign Gunshot.app
+        if: env.MACOS_CERT_P12 != ''
+        run: |
+          keychain="$RUNNER_TEMP/build.keychain"
+          security create-keychain -p ci "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p ci "$keychain"
+          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci "$keychain"
+          security list-keychains -d user -s "$keychain"
+          rm "$RUNNER_TEMP/cert.p12"
+          codesign --force --deep --options runtime --timestamp \
+            --entitlements packaging/entitlements.plist \
+            --sign "$MACOS_SIGN_IDENTITY" dist/Gunshot.app
+          codesign --verify --strict --verbose=2 dist/Gunshot.app
+      - name: Build disk image
+        run: packaging/make_dmg.sh "$(python -c 'import gunshot; print(gunshot.__version__)')" ${{ matrix.arch }}
+      - name: Notarize disk image
+        if: env.MACOS_CERT_P12 != '' && env.APPLE_ID != ''
+        run: |
+          dmg=$(ls dist/*.dmg)
+          codesign --force --timestamp --sign "$MACOS_SIGN_IDENTITY" "$dmg"
+          xcrun notarytool submit "$dmg" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD" --wait
+          xcrun stapler staple "$dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: dist/*.dmg
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
