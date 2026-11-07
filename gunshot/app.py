@@ -27,7 +27,7 @@ from .system import (
 )
 
 TOGGLE_HOTKEY = "<ctrl>+<alt>+g"
-VOLUME_LEVELS = {"Low": 0.25, "Medium": 0.6, "High": 1.0}
+VOLUME_LEVELS = {"Quiet": 0.1, "Low": 0.3, "Medium": 0.6, "High": 0.85, "Max": 1.0}
 
 
 class GunshotApp:
@@ -79,7 +79,7 @@ class GunshotApp:
         def handler(*_args) -> None:
             self.settings.pack = name
             self.settings.save()
-            self.player.set_variants(sounds.load_pack(name))
+            self.player.set_pack(sounds.load_pack(name))
             self.player.fire()  # preview the new sound
 
         return handler

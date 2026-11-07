@@ -1,0 +1,9 @@
+PLACEHOLDER AUDIO - replace before a public release.
+
+These syllables were generated with the Windows "Microsoft Zira" text-to-speech
+voice as a stand-in. Swap them for a real voice recording you own (or one
+licensed for redistribution, e.g. CC0), keeping the same file names:
+01_ya 02_me 03_te 04_ku 05_da 06_sa 07_i  (.wav)
+
+pack.json {"order": "sequence"} makes each keypress play the next syllable;
+the phrase restarts from "ya" after a 2 second pause in typing.

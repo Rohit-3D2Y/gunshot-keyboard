@@ -14,3 +14,10 @@ Each sub-folder here is a sound pack that shows up in the tray menu under
 
 The packs are bundled into the installers automatically on the next build.
 The built-in **Gunshot** pack is synthesized in code (`gunshot/sounds.py`).
+
+## Sequence packs
+
+To play the files **in order** (one per keypress) instead of at random, add a
+`pack.json` containing `{"order": "sequence"}` and name the files so they sort
+in order (`01_ya.wav`, `02_me.wav`, ...). The sequence restarts from the first
+file after 2 seconds without typing. See `Yamete Kudasai/` for an example.

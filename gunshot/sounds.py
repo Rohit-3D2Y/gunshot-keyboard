@@ -1,7 +1,8 @@
 """Sound packs.
 
-A pack is a named list of "variants" - short mono clips, one of which is
-picked at random for every keypress. Packs come from two places:
+A pack is a list of "variants" - short mono clips. By default a random one
+plays on every keypress; a *sequential* pack instead plays them in order
+(e.g. one syllable of a phrase per key). Packs come from two places:
 
   * built-in synthesized packs (``SYNTH_PACKS``), generated with numpy so
     the app needs no audio files for them;
@@ -13,14 +14,22 @@ picked at random for every keypress. Packs come from two places:
 from __future__ import annotations
 
 import io
+import json
 import sys
 import wave
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
 import numpy as np
 
 SAMPLE_RATE = 44100
+
+
+@dataclass
+class Pack:
+    variants: list[np.ndarray]
+    sequential: bool = False
 
 
 def _lowpass(signal: np.ndarray, alpha: float) -> np.ndarray:
@@ -31,6 +40,14 @@ def _lowpass(signal: np.ndarray, alpha: float) -> np.ndarray:
         acc += alpha * (x - acc)
         out[i] = acc
     return out
+
+
+def _normalise(samples: np.ndarray) -> np.ndarray:
+    peak = np.max(np.abs(samples)) if len(samples) else 0
+    return (samples / peak if peak > 0 else samples).astype(np.float32)
+
+
+# --- Gunshot -----------------------------------------------------------------
 
 
 def synth_gunshot(seed: int = 0, duration: float = 0.45) -> np.ndarray:
@@ -67,8 +84,54 @@ def synth_gunshot(seed: int = 0, duration: float = 0.45) -> np.ndarray:
     shot = attack * (0.9 * crack + 0.8 * boom + 1.6 * tail)
     # Soft clip for that overdriven, punchy character.
     shot = np.tanh(shot * 2.2)
-    shot /= np.max(np.abs(shot))
-    return shot.astype(np.float32)
+    return _normalise(shot)
+
+
+def build_variants(count: int = 4) -> list[np.ndarray]:
+    return [synth_gunshot(seed=i) for i in range(count)]
+
+
+# --- Mechanical keyboard -----------------------------------------------------
+
+
+def synth_mech_key(seed: int = 0, duration: float = 0.11) -> np.ndarray:
+    """A clicky mechanical switch: click, bottom-out clack, case resonance.
+
+      * click  - a tiny bright tick from the switch mechanism
+      * clack  - band-limited noise ~4 ms later as the keycap bottoms out
+      * thock  - two short damped resonances for the plastic/case body
+    """
+    rng = np.random.default_rng(1000 + seed)
+    n = int(SAMPLE_RATE * duration)
+    t = np.arange(n) / SAMPLE_RATE
+
+    noise = rng.uniform(-1, 1, n)
+    bright = noise - _lowpass(noise, 0.35)  # high-passed: crisp tick
+    click = bright * np.exp(-t * 900)
+
+    delay = int(SAMPLE_RATE * rng.uniform(0.003, 0.006))
+    body_noise = _lowpass(noise, 0.25) - _lowpass(noise, 0.04)  # band-pass
+    clack = np.zeros(n)
+    clack[delay:] = body_noise[: n - delay] * np.exp(-t[: n - delay] * 260)
+
+    f1 = rng.uniform(380, 520)
+    f2 = rng.uniform(1500, 2100)
+    thock = np.zeros(n)
+    td = t[: n - delay]
+    thock[delay:] = (
+        0.7 * np.sin(2 * np.pi * f1 * td) * np.exp(-td * 90)
+        + 0.25 * np.sin(2 * np.pi * f2 * td) * np.exp(-td * 220)
+    )
+
+    key = 0.8 * click + 1.0 * clack + 0.9 * thock
+    return _normalise(np.tanh(key * 1.5))
+
+
+def build_mech_variants(count: int = 6) -> list[np.ndarray]:
+    return [synth_mech_key(seed=i) for i in range(count)]
+
+
+# --- WAV packs ---------------------------------------------------------------
 
 
 def to_wav_bytes(samples: np.ndarray, volume: float = 1.0) -> bytes:
@@ -83,12 +146,12 @@ def to_wav_bytes(samples: np.ndarray, volume: float = 1.0) -> bytes:
     return buf.getvalue()
 
 
-def build_variants(count: int = 4) -> list[np.ndarray]:
-    return [synth_gunshot(seed=i) for i in range(count)]
-
-
 def read_wav(path: Path) -> np.ndarray:
-    """Load a PCM WAV as float mono at SAMPLE_RATE, normalised to peak 1."""
+    """Load a PCM WAV as float mono at SAMPLE_RATE, trimmed and normalised.
+
+    Leading silence is cut off because any gap before the sound feels like
+    input lag; trailing silence is cut so voices aren't held for nothing.
+    """
     with wave.open(str(path), "rb") as wav:
         width = wav.getsampwidth()
         channels = wav.getnchannels()
@@ -106,14 +169,18 @@ def read_wav(path: Path) -> np.ndarray:
     if rate != SAMPLE_RATE and len(data) > 1:
         n = int(len(data) * SAMPLE_RATE / rate)
         data = np.interp(np.linspace(0, len(data) - 1, n), np.arange(len(data)), data)
-    peak = np.max(np.abs(data)) if len(data) else 0
-    if peak > 0:
-        data = data / peak
+    data = _normalise(data)
+    loud = np.flatnonzero(np.abs(data) > 0.03)
+    if len(loud):
+        start = max(0, loud[0] - int(SAMPLE_RATE * 0.002))
+        end = min(len(data), loud[-1] + int(SAMPLE_RATE * 0.05))
+        data = data[start:end]
     return data.astype(np.float32)
 
 
-SYNTH_PACKS: dict[str, Callable[[], list[np.ndarray]]] = {
-    "Gunshot": build_variants,
+SYNTH_PACKS: dict[str, Callable[[], Pack]] = {
+    "Gunshot": lambda: Pack(build_variants()),
+    "Mechanical Keyboard": lambda: Pack(build_mech_variants()),
 }
 
 DEFAULT_PACK = "Gunshot"
@@ -136,17 +203,27 @@ def _wav_packs(root: Path) -> dict[str, list[Path]]:
     return packs
 
 
+def _is_sequential(folder: Path) -> bool:
+    """A pack.json with {"order": "sequence"} plays files in filename order."""
+    try:
+        meta = json.loads((folder / "pack.json").read_text(encoding="utf-8"))
+        return meta.get("order") == "sequence"
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
 def available_packs(root: Path | None = None) -> list[str]:
     names = list(SYNTH_PACKS)
     names += [n for n in _wav_packs(root or packs_dir()) if n not in SYNTH_PACKS]
     return names
 
 
-def load_pack(name: str, root: Path | None = None) -> list[np.ndarray]:
-    """Return the variants for a pack, falling back to the default pack."""
+def load_pack(name: str, root: Path | None = None) -> Pack:
+    """Return the named pack, falling back to the default pack."""
     if name in SYNTH_PACKS:
         return SYNTH_PACKS[name]()
-    files = _wav_packs(root or packs_dir()).get(name)
+    root = root or packs_dir()
+    files = _wav_packs(root).get(name)
     if files:
         variants = []
         for f in files:
@@ -155,5 +232,5 @@ def load_pack(name: str, root: Path | None = None) -> list[np.ndarray]:
             except (OSError, ValueError, wave.Error):
                 continue  # skip a broken file rather than failing the whole pack
         if variants:
-            return variants
+            return Pack(variants, sequential=_is_sequential(root / name))
     return SYNTH_PACKS[DEFAULT_PACK]()

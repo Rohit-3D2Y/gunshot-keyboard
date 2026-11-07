@@ -14,24 +14,29 @@ import queue
 import shutil
 import subprocess
 import sys
+import random
 import tempfile
 import threading
+import time
 from pathlib import Path
-
-import numpy as np
 
 from . import sounds
 
 
 class Player:
-    VOICES = 12
+    # Voices per clip: how many copies of one clip can overlap at once.
+    VOICES_PER_CLIP = 3
+    # A sequential pack starts over from its first clip after this pause.
+    SEQUENCE_RESET_SECONDS = 2.0
 
-    def __init__(self, variants: list[np.ndarray], volume: float) -> None:
+    def __init__(self, pack: sounds.Pack, volume: float) -> None:
         self._dir = Path(tempfile.mkdtemp(prefix="gunshot-"))
         self._queue: queue.Queue = queue.Queue()
-        self._variants = variants
+        self._pack = pack
         self._volume = volume
-        self._next = 0
+        self._clip = -1
+        self._last_fire = 0.0
+        self._voice_cursor: list[int] = []
         self._generation = 0
         self._worker = threading.Thread(target=self._run, daemon=True)
         self._worker.start()
@@ -46,8 +51,8 @@ class Player:
         self._volume = volume
         self._queue.put(("load", None))
 
-    def set_variants(self, variants: list[np.ndarray]) -> None:
-        self._variants = variants
+    def set_pack(self, pack: sounds.Pack) -> None:
+        self._pack = pack
         self._queue.put(("load", None))
 
     def close(self) -> None:
@@ -61,8 +66,10 @@ class Player:
             cmd, _ = self._queue.get()
             try:
                 if cmd == "fire":
-                    self._play(self._next)
-                    self._next = (self._next + 1) % self.VOICES
+                    clip = self._pick_clip()
+                    cursor = self._voice_cursor[clip]
+                    self._voice_cursor[clip] = (cursor + 1) % self.VOICES_PER_CLIP
+                    self._play(clip * self.VOICES_PER_CLIP + cursor)
                 elif cmd == "load":
                     self._reload()
                 elif cmd == "stop":
@@ -72,16 +79,33 @@ class Player:
             except Exception:  # never let one bad sound kill the audio thread
                 pass
 
+    def _pick_clip(self) -> int:
+        count = len(self._pack.variants)
+        now = time.monotonic()
+        if self._pack.sequential:
+            if now - self._last_fire > self.SEQUENCE_RESET_SECONDS:
+                self._clip = -1
+            self._clip = (self._clip + 1) % count
+        elif count > 1:
+            # Random, but never the same clip twice in a row.
+            self._clip = random.choice([c for c in range(count) if c != self._clip])
+        else:
+            self._clip = 0
+        self._last_fire = now
+        return self._clip
+
     def _reload(self) -> None:
         self._unload()
         # Fresh file names each time: the OS may still hold the old ones open.
         self._generation += 1
-        files = []
-        for i, variant in enumerate(self._variants):
-            path = self._dir / f"shot{self._generation}_{i}.wav"
+        voice_files = []
+        for i, variant in enumerate(self._pack.variants):
+            path = self._dir / f"clip{self._generation}_{i}.wav"
             path.write_bytes(sounds.to_wav_bytes(variant, self._volume))
-            files.append(path)
-        self._load([files[v % len(files)] for v in range(self.VOICES)])
+            voice_files += [path] * self.VOICES_PER_CLIP
+        self._clip = -1
+        self._voice_cursor = [0] * len(self._pack.variants)
+        self._load(voice_files)
 
     # Subclasses implement these; they always run on the worker thread.
     def _load(self, voice_files: list[Path]) -> None: ...
@@ -90,7 +114,7 @@ class Player:
 
 
 class WindowsPlayer(Player):
-    _loaded = False
+    _voices = 0
 
     @staticmethod
     def _mci(command: str) -> None:
@@ -99,16 +123,15 @@ class WindowsPlayer(Player):
     def _load(self, voice_files: list[Path]) -> None:
         for v, path in enumerate(voice_files):
             self._mci(f'open "{path}" type waveaudio alias gunshot{v}')
-        self._loaded = True
+        self._voices = len(voice_files)
 
     def _play(self, voice: int) -> None:
         self._mci(f"play gunshot{voice} from 0")
 
     def _unload(self) -> None:
-        if self._loaded:
-            for v in range(self.VOICES):
-                self._mci(f"close gunshot{v}")
-            self._loaded = False
+        for v in range(self._voices):
+            self._mci(f"close gunshot{v}")
+        self._voices = 0
 
 
 class MacPlayer(Player):
@@ -144,14 +167,14 @@ class AfplayPlayer(Player):
         subprocess.Popen(["afplay", str(self._files[voice])])
 
 
-def create_player(variants: list[np.ndarray], volume: float) -> Player:
+def create_player(pack: sounds.Pack, volume: float) -> Player:
     if sys.platform == "win32":
-        return WindowsPlayer(variants, volume)
+        return WindowsPlayer(pack, volume)
     if sys.platform == "darwin":
         try:
             import AppKit  # noqa: F401
 
-            return MacPlayer(variants, volume)
+            return MacPlayer(pack, volume)
         except ImportError:
-            return AfplayPlayer(variants, volume)
+            return AfplayPlayer(pack, volume)
     raise RuntimeError("Gunshot supports Windows and macOS only.")
