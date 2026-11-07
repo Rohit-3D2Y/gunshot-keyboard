@@ -25,7 +25,7 @@ start-at-login entry.
 
 - **Toggle on/off:** `Ctrl+Alt+G` (Mac: `Ctrl+Option+G`), or click the tray icon.
   The crosshair is red when it's on and grey when it's off.
-- **Menu:** Enabled · Sound · Volume (Low/Medium/High) · Start at login · Quit
+- **Menu:** Enabled · Sound · Volume (Quiet/Low/Medium/High/Max) · Start at login · Quit
 - Holding a key fires once, so there's no machine-gun auto-repeat. Fast typing overlaps the shots.
 
 ## Safety & privacy
@@ -43,6 +43,26 @@ start-at-login entry.
   `shasum -a 256 Gunshot-*.dmg` (Mac).
 - **Signed builds.** Release builds are code-signed (and notarized by Apple on
   macOS) once the signing secrets are configured. See *Releasing* below.
+
+## Sounds
+
+| Sound | What you hear |
+| --- | --- |
+| Gunshot | A gunshot per key (default) |
+| Mechanical Keyboard | Clicky mechanical switch |
+| Yamete Kudasai | One syllable per key: ya-me-te-ku-da-sa-i (real Japanese voice) |
+| Moan | Human sighs and moans |
+| Zombie | Zombie moan |
+| Cat | Meows |
+| Duck | Quacks and a rubber-duck squeak |
+| Fart | Classic prank |
+| Laser | Sci-fi pew-pew |
+| Punch | Punch hits |
+
+The recorded sounds are openly licensed (CC0, public domain, CC BY, CC BY-SA)
+from Wikimedia Commons. Authors and licenses are listed in
+[`gunshot/packs/CREDITS.md`](gunshot/packs/CREDITS.md). Rebuild them with
+`python tools/fetch_sounds.py`.
 
 ## Adding sounds
 

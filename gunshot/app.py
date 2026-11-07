@@ -23,6 +23,7 @@ from .system import (
     autostart_enabled,
     needs_input_permission,
     open_input_permission_settings,
+    open_text_file,
     set_autostart,
 )
 
@@ -140,6 +141,10 @@ class GunshotApp:
                 visible=lambda _item: needs_input_permission(self.listener),
             ),
             pystray.Menu.SEPARATOR,
+            pystray.MenuItem(
+                "Sound credits",
+                lambda *_: open_text_file(sounds.packs_dir() / "CREDITS.md"),
+            ),
             pystray.MenuItem("Quit", self._quit),
         )
 

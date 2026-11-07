@@ -115,3 +115,11 @@ def open_input_permission_settings() -> None:
         subprocess.Popen(
             ["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"]
         )
+
+
+def open_text_file(path: Path) -> None:
+    """Show a text file (e.g. the sound credits) in the OS's plain text editor."""
+    if sys.platform == "win32":
+        subprocess.Popen(["notepad.exe", str(path)])
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", "-e", str(path)])

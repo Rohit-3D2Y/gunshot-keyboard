@@ -71,3 +71,26 @@ def test_mech_key_is_short_and_snappy():
     key = sounds.synth_mech_key()
     assert len(key) < sounds.SAMPLE_RATE * 0.15
     assert np.argmax(np.abs(key)) < sounds.SAMPLE_RATE * 0.01
+
+
+def test_24_bit_wav(tmp_path):
+    ramp = np.linspace(-0.5, 0.5, 300)
+    ints = (ramp * 8388607).astype(np.int32)
+    raw = np.stack([ints & 0xFF, (ints >> 8) & 0xFF, (ints >> 16) & 0xFF], axis=1).astype(np.uint8)
+    path = tmp_path / "deep.wav"
+    with wave.open(str(path), "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(3)
+        wav.setframerate(sounds.SAMPLE_RATE)
+        wav.writeframes(raw.tobytes())
+    data = sounds.read_wav(path)
+    # Normalised to peak 1 with the sign preserved.
+    assert np.isclose(data.min(), -1.0, atol=1e-3) and np.isclose(data.max(), 1.0, atol=1e-3)
+    assert data[0] < 0 < data[-1]
+
+
+def test_every_bundled_pack_loads():
+    for name in sounds.available_packs():
+        pack = sounds.load_pack(name)
+        assert pack.variants, name
+        assert all(len(v) < sounds.SAMPLE_RATE * 1.6 for v in pack.variants), name

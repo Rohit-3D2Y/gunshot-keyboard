@@ -4,7 +4,7 @@ Each sub-folder here is a sound pack that shows up in the tray menu under
 **Sound**. To add one:
 
 1. Create a folder named the way it should appear in the menu, e.g. `Shotgun/`.
-2. Put one or more `.wav` files in it (8/16/32-bit PCM, any sample rate,
+2. Put one or more `.wav` files in it (8/16/24/32-bit PCM, any sample rate,
    mono or stereo). Each keypress plays one of them at random, so 3-5
    slightly different takes sound more natural than a single file.
 3. Keep clips short (under ~0.5 s) and trimmed so the sound starts

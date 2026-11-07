@@ -161,10 +161,13 @@ def read_wav(path: Path) -> np.ndarray:
         data = (np.frombuffer(raw, np.uint8).astype(np.float32) - 128) / 128
     elif width == 2:
         data = np.frombuffer(raw, "<i2").astype(np.float32) / 32768
+    elif width == 3:
+        b = np.frombuffer(raw, np.uint8).reshape(-1, 3).astype(np.int32)
+        data = ((b[:, 0] << 8 | b[:, 1] << 16 | b[:, 2] << 24) >> 8).astype(np.float32) / 8388608
     elif width == 4:
         data = np.frombuffer(raw, "<i4").astype(np.float32) / 2147483648
     else:
-        raise ValueError(f"{path.name}: unsupported {width * 8}-bit WAV (use 8/16/32-bit PCM)")
+        raise ValueError(f"{path.name}: unsupported {width * 8}-bit WAV (use 8/16/24/32-bit PCM)")
     data = data.reshape(-1, channels).mean(axis=1)
     if rate != SAMPLE_RATE and len(data) > 1:
         n = int(len(data) * SAMPLE_RATE / rate)
