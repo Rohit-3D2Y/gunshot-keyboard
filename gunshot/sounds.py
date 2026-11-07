@@ -41,13 +41,14 @@ class Pack:
 
 
 def _lowpass(signal: np.ndarray, alpha: float) -> np.ndarray:
-    """One-pole low-pass filter. Smaller alpha = darker sound."""
-    out = np.empty_like(signal)
-    acc = 0.0
-    for i, x in enumerate(signal):
-        acc += alpha * (x - acc)
-        out[i] = acc
-    return out
+    """One-pole low-pass filter. Smaller alpha = darker sound.
+
+    Computed as a convolution with the filter's (truncated) exponential
+    impulse response, so it runs in numpy rather than a slow Python loop.
+    """
+    taps = int(np.ceil(np.log(1e-6) / np.log(1 - alpha)))
+    kernel = alpha * (1 - alpha) ** np.arange(taps)
+    return np.convolve(signal, kernel)[: len(signal)].astype(signal.dtype)
 
 
 def _normalise(samples: np.ndarray) -> np.ndarray:
