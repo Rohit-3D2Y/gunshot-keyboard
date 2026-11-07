@@ -2,7 +2,6 @@
 // No framework, no build step, no tracking.
 
 const REPO = "Rohit-3D2Y/gunshot-keyboard";
-const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`;
 
 const PACK_BLURBS = {
   "Gunshot": "The original. Bang.",
@@ -74,41 +73,32 @@ async function setupDownloads(releases) {
   if (!latest) return;
   const a = classify(latest.assets);
   const os = detectOS();
-  const primary = document.getElementById("dl-primary");
-  const label = document.getElementById("dl-label");
-  const meta = document.getElementById("dl-meta");
+  const buttons = document.getElementById("dl-buttons");
   const others = document.getElementById("dl-others");
   const version = latest.tag_name.replace(/^v/, "");
 
-  let main = null;
-  const links = [];
-  if (a.windows) links.push({ key: "windows", text: "Windows", asset: a.windows });
-  if (a.macArm) links.push({ key: "macArm", text: "macOS (Apple Silicon)", asset: a.macArm });
-  if (a.macIntel) links.push({ key: "macIntel", text: "macOS (Intel)", asset: a.macIntel });
+  // One equal button per platform; the visitor's own system is highlighted
+  // and listed first.
+  const options = [
+    a.windows && { key: "windows", title: "Download for Windows", sub: "Windows 10 & 11", asset: a.windows },
+    a.macArm && { key: "macArm", title: "Download for Mac", sub: "Apple Silicon (M1 and newer)", asset: a.macArm },
+    a.macIntel && { key: "macIntel", title: "Download for Mac", sub: "Intel processor", asset: a.macIntel },
+  ].filter(Boolean);
 
-  if (os === "windows") main = links.find((l) => l.key === "windows");
-  if (os === "mac") {
-    const arch = await detectMacArch();
-    main = links.find((l) => l.key === (arch === "x86_64" ? "macIntel" : "macArm"));
-  }
+  let mine = null;
+  if (os === "windows") mine = "windows";
+  if (os === "mac") mine = (await detectMacArch()) === "x86_64" ? "macIntel" : "macArm";
+  options.sort((x, y) => (y.key === mine) - (x.key === mine));
 
-  if (main) {
-    primary.href = main.asset.browser_download_url;
-    label.textContent = `Download for ${main.text}`;
-    meta.textContent = `v${version} · ${mb(main.asset.size)} · Free`;
-  } else {
-    primary.href = RELEASES_PAGE;
-    label.textContent = "Download for Windows or Mac";
-    meta.textContent = `v${version} · Free`;
+  buttons.innerHTML = "";
+  for (const o of options) {
+    const btn = document.createElement("a");
+    btn.className = `btn ${o.key === mine || (!mine && o.key === "windows") ? "btn-primary" : "btn-secondary"}`;
+    btn.href = o.asset.browser_download_url;
+    btn.innerHTML = `<span>${o.title}</span><small>${o.sub} · v${version} · ${mb(o.asset.size)}</small>`;
+    buttons.appendChild(btn);
   }
   others.innerHTML = "";
-  for (const l of links) {
-    if (l === main) continue;
-    const link = document.createElement("a");
-    link.href = l.asset.browser_download_url;
-    link.textContent = `${l.text} (${mb(l.asset.size)})`;
-    others.appendChild(link);
-  }
   const all = document.createElement("a");
   all.href = latest.html_url;
   all.textContent = "All files & checksums";

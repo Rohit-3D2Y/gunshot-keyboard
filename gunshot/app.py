@@ -8,6 +8,7 @@ auto-repeat. The app makes no network connections.
 
 from __future__ import annotations
 
+import sys
 import threading
 
 import pystray
@@ -36,6 +37,25 @@ SPECIAL_KEYS = {
 VOLUME_LEVELS = {"Quiet": 0.1, "Low": 0.3, "Medium": 0.6, "High": 0.85, "Max": 1.0}
 
 
+def make_listener(**callbacks) -> keyboard.Listener:
+    """A global keyboard listener that is safe on every supported OS."""
+    if sys.platform != "darwin":
+        return keyboard.Listener(**callbacks)
+
+    class MacListener(keyboard.Listener):
+        def _run(self):
+            # pynput's macOS listener first looks up the keyboard layout
+            # (TISCopyCurrentKeyboardInputSource) on its background thread.
+            # macOS 14+ only allows that on the main thread and aborts the app.
+            # The layout is only stored, never used to report key events, and
+            # Gunshot never turns keys into text, so skip straight to the
+            # event loop.
+            self._context = None
+            super(keyboard.Listener, self)._run()
+
+    return MacListener(**callbacks)
+
+
 class GunshotApp:
     def __init__(self) -> None:
         self.settings = Settings.load()
@@ -46,7 +66,7 @@ class GunshotApp:
         self._held: set = set()
         self._lock = threading.Lock()
         self._hotkey = keyboard.HotKey(keyboard.HotKey.parse(TOGGLE_HOTKEY), self.toggle)
-        self.listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
+        self.listener = make_listener(on_press=self._on_press, on_release=self._on_release)
         self.icon = pystray.Icon(APP_NAME, self._make_icon(), self._tooltip(), self._make_menu())
 
     # --- keyboard -----------------------------------------------------------

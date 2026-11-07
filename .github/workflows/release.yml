@@ -43,6 +43,17 @@ jobs:
         run: |
           python tools/prepare_build.py
           python -m PyInstaller --noconfirm --clean packaging/gunshot.spec
+      - name: Smoke test (audio, keyboard hook, settings)
+        run: python tools/smoke_test.py
+      - name: Launch the built app
+        shell: pwsh
+        run: |
+          $p = Start-Process dist\Gunshot.exe -PassThru
+          Start-Sleep 15
+          if ($p.HasExited) { Write-Error "Gunshot.exe exited after start (code $($p.ExitCode))"; exit 1 }
+          Stop-Process -Id $p.Id -Force
+          Get-Process Gunshot -ErrorAction SilentlyContinue | Stop-Process -Force
+          "Gunshot.exe ran for 15 s without crashing"
       - name: Sign Gunshot.exe
         if: env.WINDOWS_CERT_PFX != ''
         shell: pwsh
@@ -98,6 +109,20 @@ jobs:
         run: |
           python tools/prepare_build.py
           python -m PyInstaller --noconfirm --clean packaging/gunshot.spec
+      - name: Smoke test (audio, keyboard listener, settings)
+        run: python tools/smoke_test.py
+      - name: Launch the built app
+        run: |
+          ./dist/Gunshot.app/Contents/MacOS/Gunshot > launch.log 2>&1 &
+          pid=$!
+          sleep 20
+          if ! kill -0 "$pid" 2>/dev/null; then
+            echo "::error::Gunshot.app exited after start"; cat launch.log
+            ls -t ~/Library/Logs/DiagnosticReports/ 2>/dev/null | head -3
+            exit 1
+          fi
+          kill "$pid"
+          echo "Gunshot.app ran for 20 s without crashing"
       - name: Sign Gunshot.app
         if: env.MACOS_CERT_P12 != ''
         run: |
