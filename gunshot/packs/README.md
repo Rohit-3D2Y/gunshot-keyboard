@@ -21,3 +21,9 @@ To play the files **in order** (one per keypress) instead of at random, add a
 `pack.json` containing `{"order": "sequence"}` and name the files so they sort
 in order (`01_ya.wav`, `02_me.wav`, ...). The sequence restarts from the first
 file after 2 seconds without typing. See `Yamete Kudasai/` for an example.
+
+## Sounds for specific keys
+
+Name a file `enter*.wav`, `space*.wav` or `backspace*.wav` (e.g. `enter01.wav`)
+and it plays only when that key is pressed; every other key uses the rest of
+the pack. See `Typewriter/enter01.wav` (the carriage-return bell).

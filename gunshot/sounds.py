@@ -2,7 +2,9 @@
 
 A pack is a list of "variants" - short mono clips. By default a random one
 plays on every keypress; a *sequential* pack instead plays them in order
-(e.g. one syllable of a phrase per key). Packs come from two places:
+(e.g. one syllable of a phrase per key). A pack can also give particular
+keys their own sound (e.g. a typewriter bell on Enter). Packs come from two
+places:
 
   * built-in synthesized packs (``SYNTH_PACKS``), generated with numpy so
     the app needs no audio files for them;
@@ -17,7 +19,7 @@ import io
 import json
 import sys
 import wave
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
@@ -26,10 +28,16 @@ import numpy as np
 SAMPLE_RATE = 44100
 
 
+# Keys that a pack can give their own sound, by file-name prefix
+# (enter01.wav, space.wav, ...). All other keys use the regular clips.
+SPECIAL_KEYS = ("enter", "space", "backspace")
+
+
 @dataclass
 class Pack:
     variants: list[np.ndarray]
     sequential: bool = False
+    special: dict[str, list[np.ndarray]] = field(default_factory=dict)
 
 
 def _lowpass(signal: np.ndarray, alpha: float) -> np.ndarray:
@@ -91,46 +99,6 @@ def build_variants(count: int = 4) -> list[np.ndarray]:
     return [synth_gunshot(seed=i) for i in range(count)]
 
 
-# --- Mechanical keyboard -----------------------------------------------------
-
-
-def synth_mech_key(seed: int = 0, duration: float = 0.11) -> np.ndarray:
-    """A clicky mechanical switch: click, bottom-out clack, case resonance.
-
-      * click  - a tiny bright tick from the switch mechanism
-      * clack  - band-limited noise ~4 ms later as the keycap bottoms out
-      * thock  - two short damped resonances for the plastic/case body
-    """
-    rng = np.random.default_rng(1000 + seed)
-    n = int(SAMPLE_RATE * duration)
-    t = np.arange(n) / SAMPLE_RATE
-
-    noise = rng.uniform(-1, 1, n)
-    bright = noise - _lowpass(noise, 0.35)  # high-passed: crisp tick
-    click = bright * np.exp(-t * 900)
-
-    delay = int(SAMPLE_RATE * rng.uniform(0.003, 0.006))
-    body_noise = _lowpass(noise, 0.25) - _lowpass(noise, 0.04)  # band-pass
-    clack = np.zeros(n)
-    clack[delay:] = body_noise[: n - delay] * np.exp(-t[: n - delay] * 260)
-
-    f1 = rng.uniform(380, 520)
-    f2 = rng.uniform(1500, 2100)
-    thock = np.zeros(n)
-    td = t[: n - delay]
-    thock[delay:] = (
-        0.7 * np.sin(2 * np.pi * f1 * td) * np.exp(-td * 90)
-        + 0.25 * np.sin(2 * np.pi * f2 * td) * np.exp(-td * 220)
-    )
-
-    key = 0.8 * click + 1.0 * clack + 0.9 * thock
-    return _normalise(np.tanh(key * 1.5))
-
-
-def build_mech_variants(count: int = 6) -> list[np.ndarray]:
-    return [synth_mech_key(seed=i) for i in range(count)]
-
-
 # --- WAV packs ---------------------------------------------------------------
 
 
@@ -183,7 +151,6 @@ def read_wav(path: Path) -> np.ndarray:
 
 SYNTH_PACKS: dict[str, Callable[[], Pack]] = {
     "Gunshot": lambda: Pack(build_variants()),
-    "Mechanical Keyboard": lambda: Pack(build_mech_variants()),
 }
 
 DEFAULT_PACK = "Gunshot"
@@ -228,12 +195,15 @@ def load_pack(name: str, root: Path | None = None) -> Pack:
     root = root or packs_dir()
     files = _wav_packs(root).get(name)
     if files:
-        variants = []
+        variants: list[np.ndarray] = []
+        special: dict[str, list[np.ndarray]] = {}
         for f in files:
             try:
-                variants.append(read_wav(f))
+                clip = read_wav(f)
             except (OSError, ValueError, wave.Error):
                 continue  # skip a broken file rather than failing the whole pack
+            key = next((k for k in SPECIAL_KEYS if f.stem.lower().startswith(k)), None)
+            (special.setdefault(key, []) if key else variants).append(clip)
         if variants:
-            return Pack(variants, sequential=_is_sequential(root / name))
+            return Pack(variants, sequential=_is_sequential(root / name), special=special)
     return SYNTH_PACKS[DEFAULT_PACK]()

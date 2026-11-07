@@ -49,7 +49,10 @@ start-at-login entry.
 | Sound | What you hear |
 | --- | --- |
 | Gunshot | A gunshot per key (default) |
-| Mechanical Keyboard | Clicky mechanical switch |
+| Mechanical Keyboard | Real Cherry MX Blue clicky switches |
+| Thocky Keyboard | Real linear switches, deep "thock" |
+| IBM Model M | The classic 1986 buckling-spring keyboard |
+| Typewriter | Real typewriter keys, with a bell on Enter |
 | Yamete Kudasai | One syllable per key: ya-me-te-ku-da-sa-i (real Japanese voice) |
 | Moan | Human sighs and moans |
 | Zombie | Zombie moan |
@@ -67,7 +70,8 @@ from Wikimedia Commons. Authors and licenses are listed in
 ## Adding sounds
 
 Drop a folder of `.wav` files into `gunshot/packs/` and it appears under
-**Sound** in the menu. See [`gunshot/packs/README.md`](gunshot/packs/README.md).
+**Sound** in the menu. Files named `enter*.wav`, `space*.wav` or
+`backspace*.wav` play only on that key. See [`gunshot/packs/README.md`](gunshot/packs/README.md).
 
 ## Develop
 

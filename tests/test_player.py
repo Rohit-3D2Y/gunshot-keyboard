@@ -44,3 +44,14 @@ def test_sequence_restarts_after_pause(monkeypatch):
     monkeypatch.setattr(audio.time, "monotonic", lambda: next(clock))
     p = FakePlayer(sounds.Pack(_clips(7), sequential=True), 1.0)
     assert _fire(p, 5) == [0, 1, 2, 0, 1]
+
+
+def test_special_key_uses_its_own_clip():
+    pack = sounds.Pack(_clips(3), special={"enter": _clips(1)})
+    p = FakePlayer(pack, 1.0)
+    p.fire("enter")
+    p.fire("a-key-with-no-special-sound")
+    p.fire("enter")
+    clips = _fire(p, 0)
+    assert clips[0] == 3 and clips[2] == 3  # index 3 = first clip after the 3 regular ones
+    assert clips[1] in (0, 1, 2)

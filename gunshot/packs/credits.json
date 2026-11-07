@@ -275,5 +275,67 @@
    "license": "CC BY 4.0",
    "author": "Bob Smaude"
   }
+ ],
+ "Mechanical Keyboard": [
+  {
+   "title": "Cherry mx blue sound for ncherry company gmbh.wav",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Cherry_mx_blue_sound_for_ncherry_company_gmbh.wav",
+   "mp3_url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/4/4a/Cherry_mx_blue_sound_for_ncherry_company_gmbh.wav/Cherry_mx_blue_sound_for_ncherry_company_gmbh.wav.mp3",
+   "mime": "audio/wav",
+   "page": "https://commons.wikimedia.org/wiki/File:Cherry_mx_blue_sound_for_ncherry_company_gmbh.wav",
+   "license": "CC BY-SA 4.0",
+   "author": "Xaqaii"
+  }
+ ],
+ "Thocky Keyboard": [
+  {
+   "title": "Typing on Keychron V1 Ultra (Red Linear Switch).wav",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/2/27/Typing_on_Keychron_V1_Ultra_%28Red_Linear_Switch%29.wav",
+   "mp3_url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/2/27/Typing_on_Keychron_V1_Ultra_%28Red_Linear_Switch%29.wav/Typing_on_Keychron_V1_Ultra_%28Red_Linear_Switch%29.wav.mp3",
+   "mime": "audio/wav",
+   "page": "https://commons.wikimedia.org/wiki/File:Typing_on_Keychron_V1_Ultra_%28Red_Linear_Switch%29.wav",
+   "license": "CC BY 4.0",
+   "author": "C40115"
+  }
+ ],
+ "IBM Model M": [
+  {
+   "title": "Typing - Model M 1986.ogg",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Typing_-_Model_M_1986.ogg",
+   "mp3_url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/0/0a/Typing_-_Model_M_1986.ogg/Typing_-_Model_M_1986.ogg.mp3",
+   "mime": "application/ogg",
+   "page": "https://commons.wikimedia.org/wiki/File:Typing_-_Model_M_1986.ogg",
+   "license": "CC0",
+   "author": "Raymangold22"
+  }
+ ],
+ "Typewriter": [
+  {
+   "title": "WWS Typewriter.ogg",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/2/25/WWS_Typewriter.ogg",
+   "mp3_url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/2/25/WWS_Typewriter.ogg/WWS_Typewriter.ogg.mp3",
+   "mime": "application/ogg",
+   "page": "https://commons.wikimedia.org/wiki/File:WWS_Typewriter.ogg",
+   "license": "CC BY 4.0",
+   "author": "Work With Sounds / Konrad Gutkowski"
+  },
+  {
+   "title": "Smith-Corona Prestige Auto 12 typing.ogg",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/d/d7/Smith-Corona_Prestige_Auto_12_typing.ogg",
+   "mp3_url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/d/d7/Smith-Corona_Prestige_Auto_12_typing.ogg/Smith-Corona_Prestige_Auto_12_typing.ogg.mp3",
+   "mime": "application/ogg",
+   "page": "https://commons.wikimedia.org/wiki/File:Smith-Corona_Prestige_Auto_12_typing.ogg",
+   "license": "CC BY 3.0",
+   "author": "lonemonk"
+  },
+  {
+   "title": "406243 stubb typewriter-ding-near-mono.wav",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/9/9f/406243_stubb_typewriter-ding-near-mono.wav",
+   "mp3_url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/9/9f/406243_stubb_typewriter-ding-near-mono.wav/406243_stubb_typewriter-ding-near-mono.wav.mp3",
+   "mime": "audio/wav",
+   "page": "https://commons.wikimedia.org/wiki/File:406243_stubb_typewriter-ding-near-mono.wav",
+   "license": "CC0",
+   "author": "_stubb"
+  }
  ]
 }

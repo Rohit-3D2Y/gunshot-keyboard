@@ -1,7 +1,7 @@
 # Sound credits
 
-Built-in **Gunshot** and **Mechanical Keyboard** are synthesized in code
-(`gunshot/sounds.py`). The packs below use recordings from Wikimedia Commons,
+The built-in **Gunshot** is synthesized in code (`gunshot/sounds.py`).
+The packs below use recordings from Wikimedia Commons,
 trimmed and normalised by `tools/fetch_sounds.py`. Each file keeps its
 original license; follow the links for full terms.
 
@@ -57,3 +57,21 @@ original license; follow the links for full terms.
 ## Punch
 
 - [Punch.wav](https://commons.wikimedia.org/wiki/File:Punch.wav) by Bob Smaude - CC BY 4.0
+
+## Mechanical Keyboard
+
+- [Cherry mx blue sound for ncherry company gmbh.wav](https://commons.wikimedia.org/wiki/File:Cherry_mx_blue_sound_for_ncherry_company_gmbh.wav) by Xaqaii - CC BY-SA 4.0
+
+## Thocky Keyboard
+
+- [Typing on Keychron V1 Ultra (Red Linear Switch).wav](https://commons.wikimedia.org/wiki/File:Typing_on_Keychron_V1_Ultra_%28Red_Linear_Switch%29.wav) by C40115 - CC BY 4.0
+
+## IBM Model M
+
+- [Typing - Model M 1986.ogg](https://commons.wikimedia.org/wiki/File:Typing_-_Model_M_1986.ogg) by Raymangold22 - CC0
+
+## Typewriter
+
+- [WWS Typewriter.ogg](https://commons.wikimedia.org/wiki/File:WWS_Typewriter.ogg) by Work With Sounds / Konrad Gutkowski - CC BY 4.0
+- [Smith-Corona Prestige Auto 12 typing.ogg](https://commons.wikimedia.org/wiki/File:Smith-Corona_Prestige_Auto_12_typing.ogg) by lonemonk - CC BY 3.0
+- [406243 stubb typewriter-ding-near-mono.wav](https://commons.wikimedia.org/wiki/File:406243_stubb_typewriter-ding-near-mono.wav) by _stubb - CC0

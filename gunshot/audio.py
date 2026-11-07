@@ -37,6 +37,7 @@ class Player:
         self._clip = -1
         self._last_fire = 0.0
         self._voice_cursor: list[int] = []
+        self._special_clips: dict[str, list[int]] = {}
         self._generation = 0
         self._worker = threading.Thread(target=self._run, daemon=True)
         self._worker.start()
@@ -44,8 +45,9 @@ class Player:
 
     # --- public API (any thread) --------------------------------------------
 
-    def fire(self) -> None:
-        self._queue.put(("fire", None))
+    def fire(self, key: str | None = None) -> None:
+        """Play a sound; `key` ("enter", "space", ...) picks that key's own sound."""
+        self._queue.put(("fire", key))
 
     def set_volume(self, volume: float) -> None:
         self._volume = volume
@@ -63,10 +65,10 @@ class Player:
 
     def _run(self) -> None:
         while True:
-            cmd, _ = self._queue.get()
+            cmd, arg = self._queue.get()
             try:
                 if cmd == "fire":
-                    clip = self._pick_clip()
+                    clip = self._pick_clip(arg)
                     cursor = self._voice_cursor[clip]
                     self._voice_cursor[clip] = (cursor + 1) % self.VOICES_PER_CLIP
                     self._play(clip * self.VOICES_PER_CLIP + cursor)
@@ -79,7 +81,9 @@ class Player:
             except Exception:  # never let one bad sound kill the audio thread
                 pass
 
-    def _pick_clip(self) -> int:
+    def _pick_clip(self, key: str | None) -> int:
+        if key in self._special_clips:
+            return random.choice(self._special_clips[key])
         count = len(self._pack.variants)
         now = time.monotonic()
         if self._pack.sequential:
@@ -98,13 +102,19 @@ class Player:
         self._unload()
         # Fresh file names each time: the OS may still hold the old ones open.
         self._generation += 1
+        # Clip indexes: regular variants first, then each special key's clips.
+        clips = list(self._pack.variants)
+        self._special_clips = {}
+        for key, special in self._pack.special.items():
+            self._special_clips[key] = list(range(len(clips), len(clips) + len(special)))
+            clips += special
         voice_files = []
-        for i, variant in enumerate(self._pack.variants):
+        for i, clip in enumerate(clips):
             path = self._dir / f"clip{self._generation}_{i}.wav"
-            path.write_bytes(sounds.to_wav_bytes(variant, self._volume))
+            path.write_bytes(sounds.to_wav_bytes(clip, self._volume))
             voice_files += [path] * self.VOICES_PER_CLIP
         self._clip = -1
-        self._voice_cursor = [0] * len(self._pack.variants)
+        self._voice_cursor = [0] * len(clips)
         self._load(voice_files)
 
     # Subclasses implement these; they always run on the worker thread.

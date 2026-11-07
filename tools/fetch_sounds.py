@@ -46,6 +46,8 @@ JP = "LL-Q5287 (jpn)-Fukujinzuke-{}.wav"
 #   split:    cut each source at silent gaps into separate clips
 #   max_len:  seconds; longer clips are faded out at this point
 #   min_len:  seconds; shorter split-off pieces (breaths, clicks) are dropped
+#   keystrokes: N - the source is continuous typing; cut out N single keystrokes
+# A file prefix of enter/space/backspace makes that clip play only on that key.
 #   sequence: play clips in order (one per keypress) instead of at random
 MANIFEST: dict[str, dict] = {
     "Yamete Kudasai": {
@@ -118,6 +120,27 @@ MANIFEST: dict[str, dict] = {
         "split": True,
         "max_len": 0.5,
         "files": [("punch", "Punch.wav")],
+    },
+    "Mechanical Keyboard": {  # Cherry MX Blue: the classic clicky mechanical sound
+        "keystrokes": 12,
+        "files": [("key", "Cherry mx blue sound for ncherry company gmbh.wav")],
+    },
+    "Thocky Keyboard": {  # linear switches: deeper, softer "thock"
+        "keystrokes": 12,
+        "files": [("key", "Typing on Keychron V1 Ultra (Red Linear Switch).wav")],
+    },
+    "IBM Model M": {  # buckling-spring keyboard from 1986
+        "keystrokes": 12,
+        "files": [("key", "Typing - Model M 1986.ogg")],
+    },
+    "Typewriter": {
+        "keystrokes": 8,
+        "length": 0.2,
+        "files": [
+            ("key", "WWS Typewriter.ogg"),
+            ("key", "Smith-Corona Prestige Auto 12 typing.ogg"),
+            ("enter", "406243 stubb typewriter-ding-near-mono.wav"),  # carriage-return bell
+        ],
     },
 }
 
@@ -223,6 +246,47 @@ def split_on_silence(x: np.ndarray, gap: float = 0.12, min_len: float = 0.08) ->
     return clips or [x]
 
 
+def find_onsets(x: np.ndarray, hop: float = 0.002, min_gap: float = 0.07) -> list[int]:
+    """Sample positions where a new transient (e.g. a keystroke) starts."""
+    h = int(SAMPLE_RATE * hop)
+    frames = len(x) // h
+    env = np.sqrt(np.mean(x[: frames * h].reshape(frames, h) ** 2, axis=1)) + 1e-6
+    look = int(0.02 / hop)  # compare with the quietest level in the last 20 ms
+    floor = np.array([env[max(0, i - look) : i].min() if i else env[0] for i in range(frames)])
+    thresh = max(np.percentile(env, 60) * 2, env.max() * 0.05)
+    onsets, last = [], -(10**9)
+    for i in range(1, frames):
+        if env[i] > thresh and env[i] > floor[i] * 4 and (i - last) * hop >= min_gap:
+            onsets.append(i * h)
+            last = i
+    return onsets
+
+
+def slice_keystrokes(x: np.ndarray, count: int, length: float = 0.16) -> list[np.ndarray]:
+    """Cut `count` clean single keystrokes out of a recording of typing."""
+    onsets = find_onsets(x)
+    clips = []
+    for k, start in enumerate(onsets):
+        start = max(0, start - int(SAMPLE_RATE * 0.002))
+        # Stop before the next keystroke so no clip contains two hits.
+        nxt = onsets[k + 1] - int(SAMPLE_RATE * 0.005) if k + 1 < len(onsets) else len(x)
+        clip = x[start : min(start + int(SAMPLE_RATE * length), nxt)].copy()
+        if len(clip) < SAMPLE_RATE * 0.06:
+            continue
+        fade = min(len(clip) // 3, int(SAMPLE_RATE * 0.03))
+        clip[-fade:] *= np.linspace(1, 0, fade)
+        clips.append(clip)
+    if len(clips) <= count:
+        return clips
+    # Rank by strike strength: skip the single loudest (often a bang or a
+    # slammed key), keep firm key-downs (key-ups are quieter), then spread the
+    # picks across that group so the set varies without one clip sticking out.
+    ranked = sorted(clips, key=lambda c: -np.max(np.abs(c)))
+    pool = ranked[1 : 1 + count * 3]
+    picks = np.linspace(0, len(pool) - 1, count).round().astype(int)
+    return [pool[i] for i in picks]
+
+
 def cap_length(x: np.ndarray, max_len: float) -> np.ndarray:
     n = int(SAMPLE_RATE * max_len)
     if len(x) <= n:
@@ -248,7 +312,9 @@ def build_pack(name: str, spec: dict, work: Path) -> list[dict]:
             download_as_wav(info, tmp)
             shutil.move(str(tmp), raw)
         audio = read_wav(raw)  # mono, 44.1 kHz, normalised, trimmed
-        if spec.get("split"):
+        if spec.get("keystrokes") and prefix == "key":
+            clips = slice_keystrokes(audio, spec["keystrokes"], spec.get("length", 0.16))
+        elif spec.get("split"):
             clips = split_on_silence(audio, min_len=spec.get("min_len", 0.08))[:MAX_CLIPS_PER_SOURCE]
         else:
             clips = [audio]
@@ -256,6 +322,8 @@ def build_pack(name: str, spec: dict, work: Path) -> list[dict]:
             clip = cap_length(clip, spec.get("max_len", 1.0))
             peak = np.max(np.abs(clip))
             clip = clip / peak if peak > 0 else clip
+            if spec.get("keystrokes") and prefix != "key":
+                clip = clip * 0.7  # e.g. the typewriter bell: don't drown the keys
             if spec.get("sequence"):
                 fname = f"{prefix}.wav"
             else:
@@ -274,8 +342,8 @@ def write_credits(all_credits: dict[str, list[dict]]) -> None:
     lines = [
         "# Sound credits",
         "",
-        "Built-in **Gunshot** and **Mechanical Keyboard** are synthesized in code",
-        "(`gunshot/sounds.py`). The packs below use recordings from Wikimedia Commons,",
+        "The built-in **Gunshot** is synthesized in code (`gunshot/sounds.py`).",
+        "The packs below use recordings from Wikimedia Commons,",
         "trimmed and normalised by `tools/fetch_sounds.py`. Each file keeps its",
         "original license; follow the links for full terms.",
         "",

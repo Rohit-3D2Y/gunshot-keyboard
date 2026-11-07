@@ -21,7 +21,7 @@ def test_wav_folder_becomes_a_pack(tmp_path):
         _write_wav(pack / f"take{i}.wav", np.linspace(0, 0.5, 1000))
     (tmp_path / "Empty").mkdir()
 
-    assert sounds.available_packs(tmp_path) == ["Gunshot", "Mechanical Keyboard", "Shotgun"]
+    assert sounds.available_packs(tmp_path) == ["Gunshot", "Shotgun"]
     pack = sounds.load_pack("Shotgun", tmp_path)
     assert not pack.sequential
     variants = pack.variants
@@ -67,10 +67,20 @@ def test_bundled_yamete_pack_is_in_order():
     assert pack.sequential and len(pack.variants) == 7
 
 
-def test_mech_key_is_short_and_snappy():
-    key = sounds.synth_mech_key()
-    assert len(key) < sounds.SAMPLE_RATE * 0.15
-    assert np.argmax(np.abs(key)) < sounds.SAMPLE_RATE * 0.01
+def test_typewriter_rings_on_enter():
+    pack = sounds.load_pack("Typewriter")
+    assert len(pack.variants) >= 8
+    assert len(pack.special["enter"]) == 1
+
+
+def test_special_key_files(tmp_path):
+    pack = tmp_path / "Keys"
+    pack.mkdir()
+    for name in ["key01", "key02", "enter", "space01", "backspace"]:
+        _write_wav(pack / f"{name}.wav", np.linspace(0, 1, 500), rate=sounds.SAMPLE_RATE, channels=1)
+    loaded = sounds.load_pack("Keys", tmp_path)
+    assert len(loaded.variants) == 2
+    assert sorted(loaded.special) == ["backspace", "enter", "space"]
 
 
 def test_24_bit_wav(tmp_path):

@@ -28,6 +28,11 @@ from .system import (
 )
 
 TOGGLE_HOTKEY = "<ctrl>+<alt>+g"
+SPECIAL_KEYS = {
+    keyboard.Key.enter: "enter",
+    keyboard.Key.space: "space",
+    keyboard.Key.backspace: "backspace",
+}
 VOLUME_LEVELS = {"Quiet": 0.1, "Low": 0.3, "Medium": 0.6, "High": 0.85, "Max": 1.0}
 
 
@@ -53,7 +58,7 @@ class GunshotApp:
                 return
             self._held.add(key)
         if self.settings.enabled:
-            self.player.fire()
+            self.player.fire(SPECIAL_KEYS.get(key))
 
     def _on_release(self, key) -> None:
         self._hotkey.release(self.listener.canonical(key))
