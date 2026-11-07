@@ -1,0 +1,19 @@
+name: Sound request
+description: Suggest a new sound pack
+labels: [sound request]
+body:
+  - type: input
+    id: sound
+    attributes:
+      label: What sound?
+      placeholder: e.g. Lightsaber, piano, Minecraft-style clicks
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Freely licensed source (if you know one)
+      description: >
+        A link to a recording under CC0, public domain, CC BY or CC BY-SA
+        (e.g. Wikimedia Commons or Freesound). We can only ship audio we're
+        allowed to redistribute.

@@ -5,7 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gunshot"
 dynamic = ["version"]
-description = "Make every keypress sound like a gunshot."
+description = "Make every keypress sound like a gunshot - or a typewriter, a mechanical keyboard, a cat..."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Rohit Tiwari" }]
 requires-python = ">=3.9"
 dependencies = ["numpy>=1.24", "pillow>=10", "pynput>=1.7.7", "pystray>=0.19.5"]
 

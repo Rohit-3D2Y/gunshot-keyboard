@@ -7,3 +7,7 @@ graphify-out/
 packaging/icons/
 packaging/version_info.txt
 pip_bg.log
+
+# Local developer tooling (machine-specific)
+.claude/
+CLAUDE.md

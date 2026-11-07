@@ -1,0 +1,30 @@
+name: Bug report
+description: Something isn't working (no sound, glitches, crashes, ...)
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Gunshot version
+      placeholder: e.g. 1.0.0 (see the Releases page you downloaded from)
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows 11, Windows 10, macOS (Apple Silicon), macOS (Intel)]
+    validations:
+      required: true
+  - type: input
+    id: sound
+    attributes:
+      label: Which sound pack?
+      placeholder: e.g. Typewriter
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Steps to reproduce help a lot. Speakers, wired or Bluetooth headphones?
+    validations:
+      required: true

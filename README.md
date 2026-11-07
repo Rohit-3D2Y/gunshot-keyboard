@@ -1,11 +1,15 @@
 # Gunshot
 
-Every key you press fires a gunshot. Works on **Windows 10/11** and **macOS 11+**
-(Apple Silicon and Intel). Lives in the system tray / menu bar.
+Turn your keyboard into a gun, a typewriter, a clicky mechanical keyboard, a
+cat... Every key you press plays a sound. Pick from 13 sound packs, switch it
+on and off with `Ctrl+Alt+G`, and that's it.
+
+Works on **Windows 10/11** and **macOS 11+** (Apple Silicon and Intel). Lives
+in the system tray / menu bar. Free, open source, no tracking, no internet.
 
 ## Install
 
-Download the latest release from the **Releases** page:
+Download the latest version from the **[Releases page](../../releases/latest)**:
 
 | System | File | How |
 | --- | --- | --- |
@@ -115,3 +119,14 @@ repository secrets and the workflow signs automatically:
 - **macOS:** an Apple Developer account ($99/year). Add `MACOS_CERT_P12`,
   `MACOS_CERT_PASSWORD`, `MACOS_SIGN_IDENTITY`, `APPLE_ID`, `APPLE_TEAM_ID` and
   `APPLE_APP_PASSWORD`.
+
+## Contributing
+
+Bug reports, sound ideas and pull requests are welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md). For security issues see
+[SECURITY.md](SECURITY.md).
+
+## License
+
+The code is [MIT](LICENSE) © 2026 Rohit Tiwari. The recorded sounds keep their own
+open licenses, listed in [gunshot/packs/CREDITS.md](gunshot/packs/CREDITS.md).
